@@ -45,7 +45,7 @@
 
 - name: Initialize the Caelestia user configuration
   ansible.builtin.command:
-    cmd: caelestia install
+    cmd: caelestia install --aur-helper yay --noconfirm
   become: true
   become_user: "{{ dotfiles_user }}"
   when: not caelestia_config.stat.exists
