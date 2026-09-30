@@ -1,22 +1,23 @@
 # dots
 
-Reproducible workstation setup for Arch Linux. The first profile installs
-Hyprland and Caelestia Shell v2 while leaving KDE Plasma and SDDM available as
-a fallback session. Application configuration is added after the base desktop
-profile is proven on a fresh machine.
+Reproducible Arch Linux workstation setup for Hyprland and Caelestia Shell v2.
+KDE Plasma with SDDM remains installed as a reliable fallback desktop session.
 
 ## Install
 
-Run this as the normal user on a fresh Arch installation:
+After following the Archinstall tutorial, run this as the normal user:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/erwin1122/dots/main/bootstrap.sh | bash
 ```
 
-GitHub renders a copy button on the command block. The script installs its
-bootstrap dependencies, clones this repository to `~/dots`, then runs the
-versioned local Ansible playbook. Review
+The bootstrap script installs its dependencies, clones this repository to
+`~/dots`, then runs the versioned local Ansible playbook. Review
 [`bootstrap.sh`](bootstrap.sh) before using a changed revision.
+
+## Tutorials
+
+- [Install Arch Linux with KDE Plasma and SDDM](docs/archinstall-kde-plasma.md)
 
 ## Profiles and tags
 
