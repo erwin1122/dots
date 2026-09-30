@@ -23,13 +23,15 @@ versioned local Ansible playbook. Review
 The current profile is Arch-only:
 
 ```bash
-ansible-playbook playbooks/arch-hyprland-caelestia.yml --ask-become-pass
+sudo ansible-playbook playbooks/arch-hyprland-caelestia.yml \
+  --extra-vars "dotfiles_user=${USER} dotfiles_home=${HOME}"
 ```
 
 Run a smaller part with tags:
 
 ```bash
-ansible-playbook playbooks/arch-hyprland-caelestia.yml --ask-become-pass --tags terminal
+sudo ansible-playbook playbooks/arch-hyprland-caelestia.yml \
+  --extra-vars "dotfiles_user=${USER} dotfiles_home=${HOME}" --tags terminal
 ```
 
 Roles separate reusable application concerns from distribution-specific package

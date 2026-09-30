@@ -2,13 +2,11 @@
   ansible.builtin.package:
     name: "{{ arch_desktop_packages }}"
     state: present
-  become: true
 
 - name: Replace JACK2 with PipeWire's JACK implementation
   ansible.builtin.command:
     cmd: pacman -S --needed --noconfirm --ask 4 pipewire-jack
   when: "'pipewire-jack' not in ansible_facts.packages"
-  become: true
   changed_when: true
 
 - name: Enable NetworkManager
@@ -16,4 +14,3 @@
     name: NetworkManager.service
     enabled: true
     state: started
-  become: true

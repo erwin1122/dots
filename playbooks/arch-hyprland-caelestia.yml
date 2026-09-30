@@ -9,6 +9,21 @@
     - ../group_vars/Archlinux.yml
 
   pre_tasks:
+    - name: Verify root provisioning context
+      ansible.builtin.command:
+        cmd: id -u
+      register: provisioning_user_id
+      changed_when: false
+      tags: always
+
+    - name: Require root provisioning context
+      ansible.builtin.assert:
+        that: provisioning_user_id.stdout == "0"
+        fail_msg: >-
+          The bootstrap script must run Ansible as root to install system
+          packages.
+      tags: always
+
     - name: Require Arch Linux
       ansible.builtin.assert:
         that:

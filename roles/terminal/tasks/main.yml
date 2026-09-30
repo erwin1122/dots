@@ -3,10 +3,8 @@
   ansible.builtin.package:
     name: "{{ arch_terminal_packages }}"
     state: present
-  become: true
 
 - name: Set Fish as the user's login shell
   ansible.builtin.user:
     name: "{{ dotfiles_user }}"
     shell: /usr/bin/fish
-  become: true

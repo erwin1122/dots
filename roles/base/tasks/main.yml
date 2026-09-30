@@ -2,16 +2,16 @@
 - name: Update Arch Linux package databases and packages
   ansible.builtin.command:
     cmd: pacman -Syu --noconfirm
-  become: true
   changed_when: true
 
 - name: Install base command-line applications
   ansible.builtin.package:
     name: "{{ arch_base_packages }}"
     state: present
-  become: true
 
 - name: Create standard XDG user directories
   ansible.builtin.command:
     cmd: xdg-user-dirs-update
+  become: true
+  become_user: "{{ dotfiles_user }}"
   changed_when: false
