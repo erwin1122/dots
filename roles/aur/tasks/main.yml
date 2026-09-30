@@ -17,7 +17,7 @@
 
 - name: Build yay when it is not installed
   ansible.builtin.command:
-    cmd: makepkg --cleanbuild --noconfirm
+    cmd: makepkg --cleanbuild --force --noconfirm
     chdir: "{{ dotfiles_home }}/.cache/dots/yay"
   when: "'yay' not in ansible_facts.packages"
   register: yay_build
@@ -26,7 +26,7 @@
 - name: Find the built yay package
   ansible.builtin.find:
     paths: "{{ dotfiles_home }}/.cache/dots/yay"
-    patterns: "yay-*-x86_64.pkg.tar.zst"
+    patterns: "yay-[0-9]*-x86_64.pkg.tar.zst"
     file_type: file
     use_regex: false
   when: "'yay' not in ansible_facts.packages"
@@ -42,3 +42,13 @@
 - name: Refresh installed package facts
   ansible.builtin.package_facts:
     manager: auto
+
+- name: Verify yay installation
+  ansible.builtin.stat:
+    path: /usr/bin/yay
+  register: yay_executable
+
+- name: Require a working yay executable
+  ansible.builtin.assert:
+    that: yay_executable.stat.executable | default(false)
+    fail_msg: yay was built but /usr/bin/yay was not installed successfully.

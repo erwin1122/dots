@@ -1,5 +1,4 @@
-dotfiles_user: "{{ ansible_user_id }}"
-dotfiles_home: "{{ ansible_env.HOME }}"
+dotfiles_user: "{{ ansible_facts['user_id'] }}"
+dotfiles_home: "{{ ansible_facts['env']['HOME'] }}"
 dotfiles_install_caelestia: true
 dotfiles_install_desktop_apps: true
-

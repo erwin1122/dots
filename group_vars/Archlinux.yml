@@ -37,7 +37,6 @@ arch_desktop_packages:
   - pipewire
   - pipewire-alsa
   - pipewire-audio
-  - pipewire-jack
   - pipewire-pulse
   - polkit-gnome
   - slurp
@@ -52,4 +51,3 @@ arch_desktop_packages:
 arch_aur_packages:
   - caelestia-cli
   - caelestia-shell
-

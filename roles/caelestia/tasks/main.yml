@@ -1,7 +1,7 @@
 ---
 - name: Install Caelestia packages from the AUR
   ansible.builtin.command:
-    cmd: "yay --sync --needed --noconfirm {{ arch_aur_packages | join(' ') }}"
+    cmd: "/usr/bin/yay --sync --needed --noconfirm {{ arch_aur_packages | join(' ') }}"
   register: caelestia_packages
   changed_when: >-
     'there is nothing to do' not in caelestia_packages.stdout | lower
