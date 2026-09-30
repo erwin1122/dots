@@ -1,0 +1,34 @@
+---
+- name: Build the Arch Hyprland and Caelestia workstation
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  become: false
+
+  pre_tasks:
+    - name: Require Arch Linux
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.distribution == "Archlinux"
+        fail_msg: >-
+          This playbook supports Arch Linux only. Distribution-specific roles
+          will be added before enabling another platform.
+      tags: always
+
+    - name: Gather installed package facts
+      ansible.builtin.package_facts:
+        manager: auto
+      tags: always
+
+  roles:
+    - role: base
+      tags: [base]
+    - role: aur
+      tags: [aur]
+    - role: terminal
+      tags: [terminal, applications]
+    - role: desktop
+      tags: [desktop, applications]
+    - role: caelestia
+      when: dotfiles_install_caelestia | bool
+      tags: [caelestia]

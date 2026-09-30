@@ -1,0 +1,19 @@
+---
+- name: Install Caelestia packages from the AUR
+  ansible.builtin.command:
+    cmd: "yay --sync --needed --noconfirm {{ arch_aur_packages | join(' ') }}"
+  register: caelestia_packages
+  changed_when: >-
+    'there is nothing to do' not in caelestia_packages.stdout | lower
+
+- name: Check whether Caelestia has already been initialized
+  ansible.builtin.stat:
+    path: "{{ dotfiles_home }}/.config/caelestia"
+  register: caelestia_config
+
+- name: Initialize the Caelestia user configuration
+  ansible.builtin.command:
+    cmd: caelestia install
+  when: not caelestia_config.stat.exists
+  register: caelestia_install
+  changed_when: caelestia_install.rc == 0

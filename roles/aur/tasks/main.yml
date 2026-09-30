@@ -1,0 +1,44 @@
+---
+- name: Install AUR build prerequisites
+  ansible.builtin.package:
+    name:
+      - base-devel
+      - git
+      - go
+    state: present
+  become: true
+
+- name: Clone yay PKGBUILD repository
+  ansible.builtin.git:
+    repo: https://aur.archlinux.org/yay.git
+    dest: "{{ dotfiles_home }}/.cache/dots/yay"
+    version: master
+    update: true
+
+- name: Build yay when it is not installed
+  ansible.builtin.command:
+    cmd: makepkg --cleanbuild --noconfirm
+    chdir: "{{ dotfiles_home }}/.cache/dots/yay"
+  when: "'yay' not in ansible_facts.packages"
+  register: yay_build
+  changed_when: yay_build.rc == 0
+
+- name: Find the built yay package
+  ansible.builtin.find:
+    paths: "{{ dotfiles_home }}/.cache/dots/yay"
+    patterns: "yay-*-x86_64.pkg.tar.zst"
+    file_type: file
+    use_regex: false
+  when: "'yay' not in ansible_facts.packages"
+  register: yay_package
+
+- name: Install the built yay package
+  ansible.builtin.command:
+    cmd: "pacman -U --noconfirm {{ (yay_package.files | map(attribute='path') | sort | last) }}"
+  when: "'yay' not in ansible_facts.packages"
+  become: true
+  changed_when: true
+
+- name: Refresh installed package facts
+  ansible.builtin.package_facts:
+    manager: auto
