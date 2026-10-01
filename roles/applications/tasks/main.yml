@@ -53,6 +53,57 @@
     arch_selected_repo_packages: "{{ arch_selected_repo_packages | unique | sort }}"
     arch_selected_aur_packages: "{{ arch_selected_aur_packages | unique | sort }}"
 
+- name: Detect graphics vendors for Steam
+  ansible.builtin.shell:
+    cmd: cat /sys/class/drm/card*/device/vendor 2>/dev/null || true
+  when:
+    - "'steam' in dotfiles_resolved_applications"
+    - dotfiles_steam_vulkan_driver == 'auto'
+  register: steam_gpu_vendor_ids
+  changed_when: false
+
+- name: Resolve the Steam Vulkan driver
+  ansible.builtin.set_fact:
+    arch_detected_steam_vulkan_driver: >-
+      {{
+        'lib32-nvidia-utils'
+        if '0x10de' in steam_gpu_vendor_ids.stdout_lines
+        else 'lib32-vulkan-radeon'
+        if '0x1002' in steam_gpu_vendor_ids.stdout_lines
+        else 'lib32-vulkan-intel'
+        if '0x8086' in steam_gpu_vendor_ids.stdout_lines
+        else 'lib32-vulkan-virtio'
+        if '0x1af4' in steam_gpu_vendor_ids.stdout_lines
+        else ''
+      }}
+  when:
+    - "'steam' in dotfiles_resolved_applications"
+    - dotfiles_steam_vulkan_driver == 'auto'
+
+- name: Select the Steam Vulkan driver
+  ansible.builtin.set_fact:
+    arch_steam_vulkan_driver: >-
+      {{
+        arch_detected_steam_vulkan_driver
+        if dotfiles_steam_vulkan_driver == 'auto'
+        else dotfiles_steam_vulkan_driver
+      }}
+  when: "'steam' in dotfiles_resolved_applications"
+
+- name: Require a supported Steam Vulkan driver
+  ansible.builtin.assert:
+    that: arch_steam_vulkan_driver | length > 0
+    fail_msg: >-
+      No supported GPU was detected for Steam. Set
+      dotfiles_steam_vulkan_driver to a lib32 Vulkan driver package.
+  when: "'steam' in dotfiles_resolved_applications"
+
+- name: Add the Steam Vulkan driver to selected packages
+  ansible.builtin.set_fact:
+    arch_selected_repo_packages: >-
+      {{ (arch_selected_repo_packages + [arch_steam_vulkan_driver]) | unique | sort }}
+  when: "'steam' in dotfiles_resolved_applications"
+
 - name: Enable multilib for Steam
   ansible.builtin.replace:
     path: /etc/pacman.conf

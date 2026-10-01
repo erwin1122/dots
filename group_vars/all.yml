@@ -2,3 +2,4 @@ dotfiles_user: "{{ ansible_facts['user_id'] }}"
 dotfiles_home: "{{ ansible_facts['env']['HOME'] }}"
 dotfiles_profile: full
 dotfiles_selected_apps: []
+dotfiles_steam_vulkan_driver: auto

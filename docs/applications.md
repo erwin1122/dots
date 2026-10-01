@@ -62,6 +62,9 @@ adds the user to the `libvirt` and `kvm` groups. Log out and back in after
 either group change.
 
 Selecting Steam enables the Arch `multilib` repository before installation.
+The profile detects Nvidia, AMD, Intel, and Virtio GPUs and adds the matching
+32-bit Vulkan driver so Pacman does not prompt for a provider. Advanced users
+can override this with `dotfiles_steam_vulkan_driver`.
 
 ## Configuration migration
 
