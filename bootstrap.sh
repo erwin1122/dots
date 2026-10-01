@@ -101,14 +101,18 @@ trap 'rm -f "${extra_vars_file}"' EXIT
   printf 'dotfiles_user: %s\n' "${USER}"
   printf 'dotfiles_home: %s\n' "${HOME}"
   printf 'dotfiles_profile: %s\n' "${profile}"
-  printf 'dotfiles_selected_apps:\n'
-  for app in "${selected_apps[@]}"; do
-    if [[ ! "${app}" =~ ^[a-z0-9-]+$ ]]; then
-      printf '%s\n' "Invalid application ID: ${app}" >&2
-      exit 2
-    fi
-    printf '  - %s\n' "${app}"
-  done
+  if [[ "${#selected_apps[@]}" -eq 0 ]]; then
+    printf 'dotfiles_selected_apps: []\n'
+  else
+    printf 'dotfiles_selected_apps:\n'
+    for app in "${selected_apps[@]}"; do
+      if [[ ! "${app}" =~ ^[a-z0-9-]+$ ]]; then
+        printf '%s\n' "Invalid application ID: ${app}" >&2
+        exit 2
+      fi
+      printf '  - %s\n' "${app}"
+    done
+  fi
 } >"${extra_vars_file}"
 
 cd "${DESTINATION}"

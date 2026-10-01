@@ -8,7 +8,8 @@
 
 - name: Start with explicitly selected applications
   ansible.builtin.set_fact:
-    dotfiles_resolved_applications: "{{ dotfiles_selected_apps | list }}"
+    dotfiles_resolved_applications: >-
+      {{ dotfiles_selected_apps | default([], true) | list }}
 
 - name: Add applications from the selected profile
   ansible.builtin.set_fact:
