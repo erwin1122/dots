@@ -1,0 +1,150 @@
+---
+- name: Require a supported application profile
+  ansible.builtin.assert:
+    that: dotfiles_profile in arch_application_profiles
+    fail_msg: >-
+      Unknown profile '{{ dotfiles_profile }}'. Choose full, workstation,
+      server, or custom.
+
+- name: Start with explicitly selected applications
+  ansible.builtin.set_fact:
+    dotfiles_resolved_applications: "{{ dotfiles_selected_apps | list }}"
+
+- name: Add applications from the selected profile
+  ansible.builtin.set_fact:
+    dotfiles_resolved_applications: >-
+      {{ dotfiles_resolved_applications + arch_application_groups[item] }}
+  loop: "{{ arch_application_profiles[dotfiles_profile].groups }}"
+
+- name: Normalize selected applications
+  ansible.builtin.set_fact:
+    dotfiles_resolved_applications: >-
+      {{ dotfiles_resolved_applications | unique | sort }}
+
+- name: Require known application identifiers
+  ansible.builtin.assert:
+    that: >-
+      dotfiles_resolved_applications |
+      difference(arch_application_catalog.keys() | list) |
+      length == 0
+    fail_msg: >-
+      Unknown application identifiers:
+      {{ dotfiles_resolved_applications |
+      difference(arch_application_catalog.keys() | list) | join(', ') }}
+
+- name: Initialize application package lists
+  ansible.builtin.set_fact:
+    arch_selected_repo_packages: []
+    arch_selected_aur_packages: []
+
+- name: Resolve packages for selected applications
+  ansible.builtin.set_fact:
+    arch_selected_repo_packages: >-
+      {{ arch_selected_repo_packages +
+      arch_application_catalog[item].repo_packages }}
+    arch_selected_aur_packages: >-
+      {{ arch_selected_aur_packages +
+      arch_application_catalog[item].aur_packages }}
+  loop: "{{ dotfiles_resolved_applications }}"
+
+- name: Normalize application package lists
+  ansible.builtin.set_fact:
+    arch_selected_repo_packages: "{{ arch_selected_repo_packages | unique | sort }}"
+    arch_selected_aur_packages: "{{ arch_selected_aur_packages | unique | sort }}"
+
+- name: Enable multilib for Steam
+  ansible.builtin.replace:
+    path: /etc/pacman.conf
+    regexp: '(?m)^#\[multilib\]\n#Include = /etc/pacman.d/mirrorlist$'
+    replace: "[multilib]\nInclude = /etc/pacman.d/mirrorlist"
+  when: "'steam' in dotfiles_resolved_applications"
+  register: multilib_config
+
+- name: Synchronize package databases after enabling multilib
+  ansible.builtin.command:
+    cmd: pacman -Syu --noconfirm
+  when: multilib_config.changed | default(false)
+  changed_when: true
+
+- name: Install selected Arch repository applications
+  ansible.builtin.package:
+    name: "{{ arch_selected_repo_packages }}"
+    state: present
+  when: arch_selected_repo_packages | length > 0
+
+- name: Install selected AUR applications
+  when: arch_selected_aur_packages | length > 0
+  block:
+    - name: Allow Yay to run Pacman during application installation
+      ansible.builtin.copy:
+        content: "{{ dotfiles_user }} ALL=(root) NOPASSWD: /usr/bin/pacman\n"
+        dest: /etc/sudoers.d/dots-yay
+        mode: "0440"
+        validate: /usr/bin/visudo -cf %s
+
+    - name: Install selected AUR applications with Yay
+      ansible.builtin.shell:
+        cmd: >-
+          /usr/bin/yay --sync --needed --noconfirm
+          {{ arch_selected_aur_packages | join(' ') }}
+          > "{{ dotfiles_home }}/.cache/dots/applications-aur.log" 2>&1
+      become: true
+      become_user: "{{ dotfiles_user }}"
+      register: applications_aur_install
+      failed_when: false
+      changed_when: applications_aur_install.rc == 0
+
+    - name: Read the AUR application installation failure log
+      ansible.builtin.command:
+        cmd: tail -n 60 "{{ dotfiles_home }}/.cache/dots/applications-aur.log"
+      when: applications_aur_install.rc != 0
+      register: applications_aur_failure_log
+      changed_when: false
+
+    - name: Report the AUR application installation failure
+      ansible.builtin.fail:
+        msg: |-
+          AUR application installation failed. Last log lines:
+          {{ applications_aur_failure_log.stdout }}
+      when: applications_aur_install.rc != 0
+  always:
+    - name: Remove the temporary Yay sudo rule
+      ansible.builtin.file:
+        path: /etc/sudoers.d/dots-yay
+        state: absent
+
+- name: Set Fish as the user's login shell
+  ansible.builtin.user:
+    name: "{{ dotfiles_user }}"
+    shell: /usr/bin/fish
+  when: "'fish' in dotfiles_resolved_applications"
+
+- name: Enable Docker
+  ansible.builtin.systemd_service:
+    name: docker.service
+    enabled: true
+    state: started
+  when: "'docker' in dotfiles_resolved_applications"
+
+- name: Add the user to the Docker group
+  ansible.builtin.user:
+    name: "{{ dotfiles_user }}"
+    groups: docker
+    append: true
+  when: "'docker' in dotfiles_resolved_applications"
+
+- name: Enable libvirt
+  ansible.builtin.systemd_service:
+    name: libvirtd.service
+    enabled: true
+    state: started
+  when: "'virt-manager' in dotfiles_resolved_applications"
+
+- name: Add the user to virtualization groups
+  ansible.builtin.user:
+    name: "{{ dotfiles_user }}"
+    groups:
+      - libvirt
+      - kvm
+    append: true
+  when: "'virt-manager' in dotfiles_resolved_applications"

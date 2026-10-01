@@ -1,24 +1,10 @@
 arch_base_packages:
   - curl
-  - fastfetch
   - git
   - jq
-  - ripgrep
   - unzip
   - wget
   - xdg-user-dirs
-  - zoxide
-arch_terminal_packages:
-  - bat
-  - btop
-  - eza
-  - fd
-  - fish
-  - fzf
-  - lazygit
-  - neovim
-  - starship
-  - tmux
 arch_desktop_packages:
   - brightnessctl
   - cliphist
@@ -29,7 +15,6 @@ arch_desktop_packages:
   - hyprpaper
   - hyprpicker
   - hyprsunset
-  - kitty
   - networkmanager
   - noto-fonts
   - noto-fonts-cjk
@@ -42,7 +27,6 @@ arch_desktop_packages:
   - slurp
   - thunar
   - ttf-jetbrains-mono-nerd
-  - waybar
   - wireplumber
   - wl-clipboard
   - xdg-desktop-portal-gtk
@@ -51,3 +35,321 @@ arch_desktop_packages:
 arch_aur_packages:
   - caelestia-cli
   - caelestia-shell
+arch_caelestia_disabled_components:
+  - firefox
+  - foot
+arch_application_catalog:
+  bash:
+    repo_packages:
+      - bash
+      - bash-completion
+    aur_packages: []
+  fish:
+    repo_packages:
+      - fish
+    aur_packages: []
+  tmux:
+    repo_packages:
+      - tmux
+    aur_packages: []
+  tmux-plugin-manager:
+    repo_packages: []
+    aur_packages:
+      - tmux-plugin-manager
+  kitty:
+    repo_packages:
+      - kitty
+    aur_packages: []
+  neovim:
+    repo_packages:
+      - neovim
+    aur_packages: []
+  git:
+    repo_packages:
+      - git
+    aur_packages: []
+  github-cli:
+    repo_packages:
+      - github-cli
+    aur_packages: []
+  fzf:
+    repo_packages:
+      - fzf
+    aur_packages: []
+  fd:
+    repo_packages:
+      - fd
+    aur_packages: []
+  ripgrep:
+    repo_packages:
+      - ripgrep
+    aur_packages: []
+  bat:
+    repo_packages:
+      - bat
+    aur_packages: []
+  eza:
+    repo_packages:
+      - eza
+    aur_packages: []
+  btop:
+    repo_packages:
+      - btop
+    aur_packages: []
+  fastfetch:
+    repo_packages:
+      - fastfetch
+    aur_packages: []
+  zoxide:
+    repo_packages:
+      - zoxide
+    aur_packages: []
+  starship:
+    repo_packages:
+      - starship
+    aur_packages: []
+  lazygit:
+    repo_packages:
+      - lazygit
+    aur_packages: []
+  lazydocker:
+    repo_packages:
+      - lazydocker
+    aur_packages: []
+  tldr:
+    repo_packages:
+      - tldr
+    aur_packages: []
+  clang:
+    repo_packages:
+      - clang
+    aur_packages: []
+  rust:
+    repo_packages:
+      - rust
+    aur_packages: []
+  dotnet-sdk:
+    repo_packages:
+      - dotnet-sdk
+    aur_packages: []
+  luarocks:
+    repo_packages:
+      - luarocks
+    aur_packages: []
+  mise:
+    repo_packages:
+      - mise
+    aur_packages: []
+  tree-sitter-cli:
+    repo_packages:
+      - tree-sitter-cli
+    aur_packages: []
+  firefox-developer-edition:
+    repo_packages:
+      - firefox-developer-edition
+      - firefox-developer-edition-i18n-de
+    aur_packages: []
+  librewolf:
+    repo_packages:
+      - librewolf
+    aur_packages: []
+  bitwarden:
+    repo_packages:
+      - bitwarden
+    aur_packages: []
+  obsidian:
+    repo_packages:
+      - obsidian
+    aur_packages: []
+  typora:
+    repo_packages: []
+    aur_packages:
+      - typora
+  signal-desktop:
+    repo_packages:
+      - signal-desktop
+    aur_packages: []
+  spotify:
+    repo_packages: []
+    aur_packages:
+      - spotify
+  localsend:
+    repo_packages: []
+    aur_packages:
+      - localsend-bin
+  nautilus:
+    repo_packages:
+      - nautilus
+    aur_packages: []
+  libreoffice:
+    repo_packages:
+      - libreoffice-fresh
+    aur_packages: []
+  gnome-disk-utility:
+    repo_packages:
+      - gnome-disk-utility
+    aur_packages: []
+  gnome-calculator:
+    repo_packages:
+      - gnome-calculator
+    aur_packages: []
+  mpv:
+    repo_packages:
+      - mpv
+    aur_packages: []
+  obs-studio:
+    repo_packages:
+      - obs-studio
+    aur_packages: []
+  kdenlive:
+    repo_packages:
+      - kdenlive
+    aur_packages: []
+  pinta:
+    repo_packages:
+      - pinta
+    aur_packages: []
+  xournalpp:
+    repo_packages:
+      - xournalpp
+    aur_packages: []
+  imv:
+    repo_packages:
+      - imv
+    aur_packages: []
+  virt-manager:
+    repo_packages:
+      - virt-manager
+      - qemu-desktop
+      - libvirt
+      - swtpm
+      - dnsmasq
+      - edk2-ovmf
+      - virt-viewer
+    aur_packages: []
+  docker:
+    repo_packages:
+      - docker
+      - docker-compose
+      - lazydocker
+    aur_packages: []
+  claude-code:
+    repo_packages: []
+    aur_packages:
+      - claude-code
+  github-copilot-cli:
+    repo_packages: []
+    aur_packages:
+      - github-copilot-cli
+  opencode:
+    repo_packages:
+      - opencode
+    aur_packages: []
+  steam:
+    repo_packages:
+      - steam
+    aur_packages: []
+arch_application_groups:
+  shell-cli:
+    - bash
+    - fish
+    - tmux
+    - tmux-plugin-manager
+    - fzf
+    - fd
+    - ripgrep
+    - bat
+    - eza
+    - btop
+    - fastfetch
+    - zoxide
+    - starship
+    - lazygit
+    - tldr
+  development:
+    - neovim
+    - git
+    - github-cli
+    - clang
+    - rust
+    - dotnet-sdk
+    - luarocks
+    - mise
+    - tree-sitter-cli
+  terminal:
+    - kitty
+    - lazydocker
+  browser-knowledge:
+    - firefox-developer-edition
+    - librewolf
+    - bitwarden
+    - obsidian
+    - typora
+  communication:
+    - signal-desktop
+    - spotify
+    - localsend
+  office-files:
+    - nautilus
+    - libreoffice
+    - gnome-disk-utility
+    - gnome-calculator
+  media-creative:
+    - mpv
+    - obs-studio
+    - kdenlive
+    - pinta
+    - xournalpp
+    - imv
+  virtualization:
+    - virt-manager
+  containers:
+    - docker
+  ai-tools:
+    - claude-code
+    - github-copilot-cli
+    - opencode
+  gaming:
+    - steam
+arch_application_profiles:
+  server:
+    desktop: false
+    caelestia: false
+    groups:
+      - shell-cli
+      - development
+      - containers
+      - ai-tools
+  workstation:
+    desktop: true
+    caelestia: true
+    groups:
+      - shell-cli
+      - development
+      - terminal
+      - browser-knowledge
+      - communication
+      - office-files
+      - media-creative
+      - virtualization
+      - containers
+      - ai-tools
+  full:
+    desktop: true
+    caelestia: true
+    groups:
+      - shell-cli
+      - development
+      - terminal
+      - browser-knowledge
+      - communication
+      - office-files
+      - media-creative
+      - virtualization
+      - containers
+      - ai-tools
+      - gaming
+  custom:
+    desktop: false
+    caelestia: false
+    groups: []

@@ -33,6 +33,19 @@
           will be added before enabling another platform.
       tags: always
 
+    - name: Require a supported profile
+      ansible.builtin.assert:
+        that: dotfiles_profile in arch_application_profiles
+        fail_msg: >-
+          Unknown profile '{{ dotfiles_profile }}'. Choose full, workstation,
+          server, or custom.
+      tags: always
+
+    - name: Resolve profile features
+      ansible.builtin.set_fact:
+        dotfiles_profile_features: "{{ arch_application_profiles[dotfiles_profile] }}"
+      tags: always
+
     - name: Gather installed package facts
       ansible.builtin.package_facts:
         manager: auto
@@ -43,10 +56,11 @@
       tags: [base]
     - role: aur
       tags: [aur]
-    - role: terminal
-      tags: [terminal, applications]
+    - role: applications
+      tags: [applications]
     - role: desktop
-      tags: [desktop, applications]
+      when: dotfiles_profile_features.desktop | bool
+      tags: [desktop]
     - role: caelestia
-      when: dotfiles_install_caelestia | bool
+      when: dotfiles_profile_features.caelestia | bool
       tags: [caelestia]

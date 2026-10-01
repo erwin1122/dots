@@ -1,11 +1,12 @@
 # dots
 
-Reproducible Arch Linux workstation setup for Hyprland and Caelestia Shell v2.
-KDE Plasma with SDDM remains installed as a reliable fallback desktop session.
+Reproducible Arch Linux setup for Hyprland and Caelestia Shell v2. KDE Plasma
+with SDDM remains installed as a reliable fallback desktop session.
 
 ## Install
 
-After following the Archinstall tutorial, run this as the normal user:
+After following the Archinstall tutorial, run this as the normal user. With no
+arguments, it installs the complete daily-driver profile:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/erwin1122/dots/main/bootstrap.sh | bash
@@ -18,23 +19,24 @@ The bootstrap script installs its dependencies, clones this repository to
 ## Tutorials
 
 - [Install Arch Linux with KDE Plasma and SDDM](docs/archinstall-kde-plasma.md)
+- [Application catalog and installation profiles](docs/applications.md)
 
-## Profiles and tags
-
-The current profile is Arch-only:
-
-```bash
-sudo ansible-playbook playbooks/arch-hyprland-caelestia.yml \
-  --extra-vars "dotfiles_user=${USER} dotfiles_home=${HOME}"
-```
-
-Run a smaller part with tags:
+## Profiles
 
 ```bash
-sudo ansible-playbook playbooks/arch-hyprland-caelestia.yml \
-  --extra-vars "dotfiles_user=${USER} dotfiles_home=${HOME}" --tags terminal
+# Daily-driver desktop, including Steam
+curl -fsSL https://raw.githubusercontent.com/erwin1122/dots/main/bootstrap.sh | bash -s -- full
+
+# Desktop without gaming
+curl -fsSL https://raw.githubusercontent.com/erwin1122/dots/main/bootstrap.sh | bash -s -- workstation
+
+# No graphical desktop or Caelestia
+curl -fsSL https://raw.githubusercontent.com/erwin1122/dots/main/bootstrap.sh | bash -s -- server
+
+# Select applications from an interactive terminal prompt
+curl -fsSL https://raw.githubusercontent.com/erwin1122/dots/main/bootstrap.sh | bash -s -- select
 ```
 
-Roles separate reusable application concerns from distribution-specific package
-lists. Future Ubuntu or other distribution profiles will reuse the portable
-roles and provide their own package variables and tasks.
+The current implementation is Arch-only. Each app is named in the catalog,
+can be installed through the `custom` or `select` profile, and will receive
+its own configuration directory during the next migration phase.

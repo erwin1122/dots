@@ -42,6 +42,7 @@
       ansible.builtin.shell:
         cmd: >-
           caelestia install --aur-helper yay --noconfirm
+          --disable-components {{ arch_caelestia_disabled_components | join(',') }}
           > "{{ dotfiles_home }}/.cache/dots/caelestia-initialize.log" 2>&1
       become: true
       become_user: "{{ dotfiles_user }}"
