@@ -47,7 +47,7 @@ curl -fsSL https://raw.githubusercontent.com/erwin1122/dots/main/bootstrap.sh | 
 | Media and creative work | `mpv`, `obs-studio`, `kdenlive`, `pinta`, `xournalpp`, `imv` | Arch |
 | Virtualization | `virt-manager` | Arch; also installs QEMU, libvirt, SWTPM, DNSMasq, OVMF, and Virt Viewer |
 | Containers | `docker` | Arch; also installs Docker Compose and Lazydocker |
-| AI coding tools | `claude-code`, `github-copilot-cli`, `opencode` | AUR for Claude Code and Copilot CLI; Arch for OpenCode |
+| AI coding tools | `claude-code`, `github-copilot-cli`, `opencode` | AUR for Claude Code and the Copilot CLI binary; Arch for OpenCode |
 | Gaming | `steam` | Arch `multilib`; only in `full` |
 
 The `firefox-developer-edition` entry also installs the German language pack.
@@ -65,6 +65,10 @@ Selecting Steam enables the Arch `multilib` repository before installation.
 The profile detects Nvidia, AMD, Intel, and Virtio GPUs and adds the matching
 32-bit Vulkan driver so Pacman does not prompt for a provider. Advanced users
 can override this with `dotfiles_steam_vulkan_driver`.
+
+Before AUR builds, the installer clears the package-download cache and then
+installs AUR apps one at a time with build cleanup. This keeps the `full`
+profile viable on moderately sized VM disks.
 
 ## Configuration migration
 

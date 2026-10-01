@@ -124,6 +124,12 @@
     state: present
   when: arch_selected_repo_packages | length > 0
 
+- name: Clear package cache before AUR builds
+  ansible.builtin.command:
+    cmd: paccache --remove --keep 0
+  when: arch_selected_aur_packages | length > 0
+  changed_when: true
+
 - name: Install selected AUR applications
   when: arch_selected_aur_packages | length > 0
   block:
@@ -134,31 +140,41 @@
         mode: "0440"
         validate: /usr/bin/visudo -cf %s
 
-    - name: Install selected AUR applications with Yay
+    - name: Install each selected AUR application with Yay
       ansible.builtin.shell:
         cmd: >-
-          /usr/bin/yay --sync --needed --noconfirm
-          {{ arch_selected_aur_packages | join(' ') }}
-          > "{{ dotfiles_home }}/.cache/dots/applications-aur.log" 2>&1
+          /usr/bin/yay --sync --needed --noconfirm --cleanafter {{ item }}
+          > "{{ dotfiles_home }}/.cache/dots/application-{{ item }}.log" 2>&1
       become: true
       become_user: "{{ dotfiles_user }}"
       register: applications_aur_install
       failed_when: false
       changed_when: applications_aur_install.rc == 0
+      loop: "{{ arch_selected_aur_packages }}"
 
-    - name: Read the AUR application installation failure log
+    - name: Collect failed AUR application identifiers
+      ansible.builtin.set_fact:
+        failed_aur_applications: >-
+          {{ applications_aur_install.results |
+          selectattr('rc', 'ne', 0) |
+          map(attribute='item') | list }}
+
+    - name: Read failed AUR application logs
       ansible.builtin.command:
-        cmd: tail -n 60 "{{ dotfiles_home }}/.cache/dots/applications-aur.log"
-      when: applications_aur_install.rc != 0
-      register: applications_aur_failure_log
+        cmd: "tail -n 60 {{ dotfiles_home }}/.cache/dots/application-{{ item }}.log"
+      loop: "{{ failed_aur_applications }}"
+      register: applications_aur_failure_logs
       changed_when: false
 
     - name: Report the AUR application installation failure
       ansible.builtin.fail:
         msg: |-
-          AUR application installation failed. Last log lines:
-          {{ applications_aur_failure_log.stdout }}
-      when: applications_aur_install.rc != 0
+          AUR application installation failed for:
+          {{ failed_aur_applications | join(', ') }}
+
+          {{ applications_aur_failure_logs.results |
+          map(attribute='stdout') | join('\n\n') }}
+      when: failed_aur_applications | length > 0
   always:
     - name: Remove the temporary Yay sudo rule
       ansible.builtin.file:

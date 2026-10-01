@@ -2,6 +2,7 @@ arch_base_packages:
   - curl
   - git
   - jq
+  - pacman-contrib
   - unzip
   - wget
   - xdg-user-dirs
@@ -240,7 +241,7 @@ arch_application_catalog:
   github-copilot-cli:
     repo_packages: []
     aur_packages:
-      - github-copilot-cli
+      - github-copilot-cli-bin
   opencode:
     repo_packages:
       - opencode
