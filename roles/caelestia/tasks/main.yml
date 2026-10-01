@@ -1,53 +1,74 @@
 ---
-- name: Allow Yay to run Pacman during this installation
-  ansible.builtin.copy:
-    content: "{{ dotfiles_user }} ALL=(root) NOPASSWD: /usr/bin/pacman\n"
-    dest: /etc/sudoers.d/dots-yay
-    mode: "0440"
-    validate: /usr/bin/visudo -cf %s
+- name: Install and initialize Caelestia
+  block:
+    - name: Allow Yay to run Pacman during Caelestia installation
+      ansible.builtin.copy:
+        content: "{{ dotfiles_user }} ALL=(root) NOPASSWD: /usr/bin/pacman\n"
+        dest: /etc/sudoers.d/dots-yay
+        mode: "0440"
+        validate: /usr/bin/visudo -cf %s
 
-- name: Install Caelestia packages from the AUR
-  ansible.builtin.shell:
-    cmd: >-
-      /usr/bin/yay --sync --needed --noconfirm {{ arch_aur_packages | join(' ') }}
-      > "{{ dotfiles_home }}/.cache/dots/caelestia-install.log" 2>&1
-  become: true
-  become_user: "{{ dotfiles_user }}"
-  register: caelestia_packages
-  failed_when: false
-  changed_when: >-
-    caelestia_packages.rc == 0 and
-    'there is nothing to do' not in caelestia_packages.stdout | lower
+    - name: Install Caelestia packages from the AUR
+      ansible.builtin.shell:
+        cmd: >-
+          /usr/bin/yay --sync --needed --noconfirm {{ arch_aur_packages | join(' ') }}
+          > "{{ dotfiles_home }}/.cache/dots/caelestia-packages.log" 2>&1
+      become: true
+      become_user: "{{ dotfiles_user }}"
+      register: caelestia_packages
+      failed_when: false
+      changed_when: caelestia_packages.rc == 0
 
-- name: Read the Caelestia installation failure log
-  ansible.builtin.command:
-    cmd: tail -n 60 "{{ dotfiles_home }}/.cache/dots/caelestia-install.log"
-  when: caelestia_packages.rc != 0
-  register: caelestia_failure_log
-  changed_when: false
+    - name: Read the Caelestia package installation failure log
+      ansible.builtin.command:
+        cmd: tail -n 60 "{{ dotfiles_home }}/.cache/dots/caelestia-packages.log"
+      when: caelestia_packages.rc != 0
+      register: caelestia_packages_failure_log
+      changed_when: false
 
-- name: Remove the temporary Yay sudo rule
-  ansible.builtin.file:
-    path: /etc/sudoers.d/dots-yay
-    state: absent
+    - name: Report the Caelestia package installation failure
+      ansible.builtin.fail:
+        msg: |-
+          Caelestia package installation failed. Last log lines:
+          {{ caelestia_packages_failure_log.stdout }}
+      when: caelestia_packages.rc != 0
 
-- name: Report the Caelestia installation failure
-  ansible.builtin.fail:
-    msg: |-
-      Caelestia package installation failed. Last log lines:
-      {{ caelestia_failure_log.stdout }}
-  when: caelestia_packages.rc != 0
+    - name: Check whether Caelestia has already been initialized
+      ansible.builtin.stat:
+        path: "{{ dotfiles_home }}/.config/caelestia/shell.json"
+      register: caelestia_config
 
-- name: Check whether Caelestia has already been initialized
-  ansible.builtin.stat:
-    path: "{{ dotfiles_home }}/.config/caelestia"
-  register: caelestia_config
+    - name: Initialize the Caelestia user configuration
+      ansible.builtin.shell:
+        cmd: >-
+          caelestia install --aur-helper yay --noconfirm
+          > "{{ dotfiles_home }}/.cache/dots/caelestia-initialize.log" 2>&1
+      become: true
+      become_user: "{{ dotfiles_user }}"
+      when: not caelestia_config.stat.exists
+      register: caelestia_initialize
+      failed_when: false
+      changed_when: caelestia_initialize.rc == 0
 
-- name: Initialize the Caelestia user configuration
-  ansible.builtin.command:
-    cmd: caelestia install --aur-helper yay --noconfirm
-  become: true
-  become_user: "{{ dotfiles_user }}"
-  when: not caelestia_config.stat.exists
-  register: caelestia_install
-  changed_when: caelestia_install.rc == 0
+    - name: Read the Caelestia initialization failure log
+      ansible.builtin.command:
+        cmd: tail -n 60 "{{ dotfiles_home }}/.cache/dots/caelestia-initialize.log"
+      when:
+        - not caelestia_config.stat.exists
+        - caelestia_initialize.rc != 0
+      register: caelestia_initialize_failure_log
+      changed_when: false
+
+    - name: Report the Caelestia initialization failure
+      ansible.builtin.fail:
+        msg: |-
+          Caelestia initialization failed. Last log lines:
+          {{ caelestia_initialize_failure_log.stdout }}
+      when:
+        - not caelestia_config.stat.exists
+        - caelestia_initialize.rc != 0
+  always:
+    - name: Remove the temporary Yay sudo rule
+      ansible.builtin.file:
+        path: /etc/sudoers.d/dots-yay
+        state: absent
