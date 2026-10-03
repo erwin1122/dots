@@ -8,7 +8,10 @@ return {
       vim.g.tmux_navigator_no_mappings = 1
     end,
     config = function()
-      dofile(vim.fn.expand('~/src/vim-herdr-navigation/editor/nvim.lua'))
+      -- vim-herdr-navigation is deployed by dots to
+      -- ~/.config/herdr/plugins/vim-herdr-navigation (vendored there, not
+      -- in ~/src), so this works on fresh installs.
+      dofile(vim.fn.expand('~/.config/herdr/plugins/vim-herdr-navigation/editor/nvim.lua'))
     end,
   },
 }

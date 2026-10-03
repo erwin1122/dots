@@ -113,3 +113,22 @@
   loop: "{{ configs_link_mappings }}"
   loop_control:
     label: "{{ item.dest }}"
+
+- name: Register herdr plugins that are not yet linked
+  ansible.builtin.shell:
+    cmd: |
+      set -euo pipefail
+      plugins_dir="{{ dotfiles_home }}/.config/herdr/plugins"
+      for manifest in "$plugins_dir"/*/herdr-plugin.toml; do
+        [ -e "$manifest" ] || exit 0
+        plugin_dir="$(dirname "$manifest")"
+        id="$(sed -n 's/^id *= *"\(.*\)"/\1/p' "$manifest" | head -1)"
+        [ -n "$id" ] || continue
+        if ! grep -q "\"plugin_id\": \"$id\"" "{{ dotfiles_home }}/.config/herdr/plugins.json" 2>/dev/null; then
+          herdr plugin link "$plugin_dir"
+        fi
+      done
+  become: "{{ ansible_facts['user_id'] != dotfiles_user }}"
+  become_user: "{{ dotfiles_user }}"
+  when: "'herdr' in configs_active_apps"
+  changed_when: false
