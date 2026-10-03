@@ -47,12 +47,19 @@ curl -fsSL https://raw.githubusercontent.com/erwin1122/dots/main/bootstrap.sh | 
 | Media and creative work | `mpv`, `obs-studio`, `kdenlive`, `pinta`, `xournalpp`, `imv` | Arch |
 | Virtualization | `virt-manager` | Arch; also installs QEMU, libvirt, SWTPM, DNSMasq, OVMF, and Virt Viewer |
 | Containers | `docker` | Arch; also installs Docker Compose and Lazydocker |
-| AI coding tools | `claude-code`, `github-copilot-cli`, `opencode` | AUR for Claude Code and the Copilot CLI binary; Arch for OpenCode |
+| AI coding tools | `claude-code`, `github-copilot-cli`, `opencode`, `herdr`, `omp` | AUR for Claude Code and the Copilot CLI binary; Arch for OpenCode; GitHub release binaries for Herdr and omp |
 | Gaming | `steam` | Arch `multilib`; only in `full` |
 
 The `firefox-developer-edition` entry also installs the German language pack.
 Caelestia's default Firefox and Foot components are disabled: this setup uses
 Firefox Developer Edition plus LibreWolf and Kitty instead.
+
+## Release binaries
+
+Herdr and omp are not packaged in Arch repositories or the AUR. They are
+installed directly from their GitHub release pages into `~/.local/bin` via
+`get_url`; on re-runs the binary is only re-downloaded when the release is
+newer than the installed one.
 
 ## Service changes
 
@@ -72,19 +79,8 @@ profile viable on moderately sized VM disks.
 
 ## Configuration migration
 
-This phase installs software only. Application configuration is deliberately
-deferred. The next phase will keep configuration sources separated by
-application, for example:
-
-```text
-config/
-├── fish/
-├── nvim/
-├── tmux/
-├── kitty/
-├── lazygit/
-└── ...
-```
-
-That separation will allow a configuration to be enabled independently of the
-package profile that installed its application.
+Application configuration lives in [`config/`](../config) and is deployed by
+the `configs` role as symlinks into `$HOME`, but only for applications that
+are installed in the same playbook run. See
+[`docs/configs.md`](configs.md) for the full catalog, layout convention, and
+behavior.

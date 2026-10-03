@@ -1,0 +1,7 @@
+# omp user configuration
+# Deployed as a symlink from ~/dots/config by the dots Ansible playbook.
+# Reference: https://omp.sh/docs/settings
+stt:
+  # Dictation (push-to-talk on space in the omp editor)
+  enabled: true
+  language: de

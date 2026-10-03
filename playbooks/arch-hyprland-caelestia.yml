@@ -64,3 +64,5 @@
     - role: caelestia
       when: dotfiles_profile_features.caelestia | bool
       tags: [caelestia]
+    - role: configs
+      tags: [configs]

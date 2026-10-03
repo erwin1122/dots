@@ -51,7 +51,7 @@ firefox-developer-edition librewolf bitwarden obsidian typora
 signal-desktop spotify localsend
 nautilus libreoffice gnome-disk-utility gnome-calculator
 mpv obs-studio kdenlive pinta xournalpp imv
-virt-manager docker claude-code github-copilot-cli opencode steam
+virt-manager docker claude-code github-copilot-cli opencode steam herdr omp
 
 Enter comma-separated IDs, for example:
 tmux,neovim,spotify,firefox-developer-edition

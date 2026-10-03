@@ -1,0 +1,113 @@
+---
+- name: Require resolved applications from the applications role
+  ansible.builtin.assert:
+    that: dotfiles_resolved_applications is defined
+    fail_msg: >-
+      The configs role depends on dotfiles_resolved_applications, which is set
+      by the applications role. Run it before configs.
+
+- name: Locate configuration packages in the repository
+  ansible.builtin.find:
+    paths: "{{ dotfiles_config_dir }}"
+    file_type: directory
+    recurse: false
+  register: configs_available
+  changed_when: false
+
+- name: Determine installed applications that have managed configuration
+  ansible.builtin.set_fact:
+    configs_active_apps: >-
+      {{ configs_available.files | map(attribute='path') | map('basename')
+         | select('in', dotfiles_resolved_applications) | list | sort }}
+
+- name: Inventory top-level entries of active configuration packages
+  ansible.builtin.find:
+    paths: "{{ dotfiles_config_dir }}/{{ item }}"
+    file_type: any
+    hidden: true
+    recurse: false
+  loop: "{{ configs_active_apps }}"
+  register: configs_top
+  changed_when: false
+
+- name: Inventory entries inside .config and .omp roots
+  ansible.builtin.find:
+    paths: "{{ item.path }}"
+    file_type: any
+    hidden: true
+    recurse: false
+  loop: >-
+    {{ configs_top.results
+       | selectattr('files', 'defined')
+       | map(attribute='files') | flatten
+       | selectattr('path', 'search', '/\.(config|omp)$')
+       | list }}
+  register: configs_nested
+  changed_when: false
+
+- name: Build the configuration link mappings
+  ansible.builtin.set_fact:
+    configs_link_mappings: >-
+      {%- set mappings = [] -%}
+      {%- for result in configs_top.results -%}
+        {%- for entry in result.files | default([]) -%}
+          {%- set name = entry.path | basename -%}
+          {%- if name not in ['.config', '.omp'] -%}
+            {{- mappings.append({
+                  'src': entry.path,
+                  'dest': dotfiles_home ~ '/' ~ name }) -}}
+          {%- endif -%}
+        {%- endfor -%}
+      {%- endfor -%}
+      {%- for result in configs_nested.results -%}
+        {%- for entry in result.files | default([]) -%}
+          {{- mappings.append({
+                'src': entry.path,
+                'dest': dotfiles_home ~ '/'
+                        ~ (result.item.path | basename) ~ '/'
+                        ~ (entry.path | basename) }) -}}
+        {%- endfor -%}
+      {%- endfor -%}
+      {{- mappings -}}
+
+- name: Check for unmanaged files at configuration targets
+  ansible.builtin.stat:
+    path: "{{ item.dest }}"
+  loop: "{{ configs_link_mappings }}"
+  register: configs_targets
+  changed_when: false
+
+- name: Create the configuration archive directory
+  ansible.builtin.file:
+    path: "{{ dotfiles_home }}/.cache/dots/archived-configs"
+    state: directory
+
+- name: Archive unmanaged configuration targets
+  ansible.builtin.command:
+    cmd: >-
+      mv {{ item.item.dest | quote }}
+      {{ (dotfiles_home ~ '/.cache/dots/archived-configs/'
+          ~ (item.item.dest | replace(dotfiles_home ~ '/', '')
+             | replace('/', '-'))
+          ~ '-' ~ lookup('pipe', 'date +%Y%m%d-%H%M%S')) | quote }}
+  loop: >-
+    {{ configs_targets.results
+       | selectattr('stat.exists')
+       | selectattr('stat.islnk', 'equalto', false)
+       | selectattr('stat.isdir')
+       | list }}
+  changed_when: true
+
+- name: Create parent directories for configuration links
+  ansible.builtin.file:
+    path: "{{ item.dest | dirname }}"
+    state: directory
+  loop: "{{ configs_link_mappings }}"
+
+- name: Link managed configuration into the home directory
+  ansible.builtin.file:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    state: link
+    force: true
+  loop: "{{ configs_link_mappings }}"

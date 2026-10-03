@@ -246,6 +246,18 @@ arch_application_catalog:
     repo_packages:
       - opencode
     aur_packages: []
+  herdr:
+    repo_packages: []
+    aur_packages: []
+    binary:
+      url: https://github.com/herdrdev/herdr/releases/latest/download/herdr-linux-x86_64
+      dest: .local/bin/herdr
+  omp:
+    repo_packages: []
+    aur_packages: []
+    binary:
+      url: https://github.com/can1357/oh-my-pi/releases/latest/download/omp-linux-x64
+      dest: .local/bin/omp
   steam:
     repo_packages:
       - steam
@@ -310,6 +322,8 @@ arch_application_groups:
     - claude-code
     - github-copilot-cli
     - opencode
+    - herdr
+    - omp
   gaming:
     - steam
 arch_application_profiles:

@@ -1,0 +1,67 @@
+onboarding = false
+
+[keys]
+# tmux muscle memory: C-a leader, splits like ~/.tmux.conf
+# split_horizontal = new pane below (tmux "h" -> split-window -v)
+# split_vertical   = new pane right (tmux "v" -> split-window -h)
+prefix = "ctrl+a"
+split_horizontal = "prefix+h"
+split_vertical = "prefix+v"
+
+# vim-tmux-navigator style: plugin checks foreground process, forwards to
+# vim/nvim when running, otherwise moves herdr focus
+focus_pane_left = "prefix+alt+h"
+focus_pane_down = "prefix+alt+j"
+focus_pane_up = "prefix+alt+k"
+focus_pane_right = "prefix+alt+l"
+
+# tmux q = kill-pane; detach moves to d to avoid the footgun
+close_pane = "prefix+q"
+detach = "prefix+d"
+
+# last focused pane (global back-and-forth)
+last_pane = "prefix+l"
+
+# tab opens the space/session list; space opens the goto picker
+workspace_picker = "prefix+tab"
+goto = "prefix+space"
+cycle_pane_next = ""
+cycle_pane_previous = ""
+
+# workspace list in navigate mode: ctrl+n/p neben den Pfeiltasten
+# (j/k sind dort Pane-Bewegung, daher np)
+navigate_workspace_up = ["up", "ctrl+p"]
+navigate_workspace_down = ["down", "ctrl+n"]
+
+# e = toggle sidebar, b = edit scrollback (swapped from defaults)
+toggle_sidebar = "prefix+e"
+edit_scrollback = "prefix+b"
+
+[[keys.command]]
+key = "ctrl+h"
+type = "plugin_action"
+command = "vim-herdr-navigation.left"
+description = "navigate left (vim/herdr)"
+
+[[keys.command]]
+key = "ctrl+j"
+type = "plugin_action"
+command = "vim-herdr-navigation.down"
+description = "navigate down (vim/herdr)"
+
+[[keys.command]]
+key = "ctrl+k"
+type = "plugin_action"
+command = "vim-herdr-navigation.up"
+description = "navigate up (vim/herdr)"
+
+[[keys.command]]
+key = "ctrl+l"
+type = "plugin_action"
+command = "vim-herdr-navigation.right"
+description = "navigate right (vim/herdr)"
+
+[ui]
+status_indicators = "symbols"
+
+tab_bar_position = "bottom"

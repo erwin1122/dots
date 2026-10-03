@@ -38,5 +38,6 @@ curl -fsSL https://raw.githubusercontent.com/erwin1122/dots/main/bootstrap.sh | 
 ```
 
 The current implementation is Arch-only. Each app is named in the catalog,
-can be installed through the `custom` or `select` profile, and will receive
-its own configuration directory during the next migration phase.
+can be installed through the `custom` or `select` profile, and application
+configuration is deployed as symlinks for every installed app that has one —
+see [docs/configs.md](docs/configs.md).
