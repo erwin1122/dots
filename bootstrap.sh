@@ -112,6 +112,19 @@ if ! command -v pacman >/dev/null 2>&1; then
   exit 1
 fi
 
+if [[ "${profile}" != "server" ]]; then
+  available_mb=$(df -Pm "${HOME}" | awk 'NR==2 {print $4}')
+  if (( available_mb < 5120 )); then
+    printf '%s\n' \
+      "Only ${available_mb} MB of disk space is available under ${HOME}." \
+      "AUR builds for the desktop profiles (e.g. quickshell for Caelestia)" \
+      "temporarily need several GB. Free at least 5 GB, or use a profile" \
+      "with fewer AUR packages:" >&2
+    printf '  curl -fsSL https://raw.githubusercontent.com/erwin1122/dots/main/bootstrap.sh | bash -s -- server\n' >&2
+    exit 1
+  fi
+fi
+
 sudo "${sudo_options[@]}" pacman -Syu --needed --noconfirm ansible git base-devel
 
 if [[ -d "${DESTINATION}/.git" ]]; then
