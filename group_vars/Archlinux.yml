@@ -262,7 +262,14 @@ arch_application_catalog:
     repo_packages:
       - steam
     aur_packages: []
+  hyprmod:
+    repo_packages: []
+    aur_packages:
+      - hyprmod
+
 arch_application_groups:
+  desktop-tools:
+    - hyprmod
   shell-cli:
     - bash
     - fish
@@ -340,6 +347,7 @@ arch_application_profiles:
     caelestia: true
     groups:
       - shell-cli
+      - desktop-tools
       - development
       - terminal
       - browser-knowledge
@@ -354,6 +362,7 @@ arch_application_profiles:
     caelestia: true
     groups:
       - shell-cli
+      - desktop-tools
       - development
       - terminal
       - browser-knowledge

@@ -49,6 +49,7 @@ curl -fsSL https://raw.githubusercontent.com/erwin1122/dots/main/bootstrap.sh | 
 | Containers | `docker` | Arch; also installs Docker Compose and Lazydocker |
 | AI coding tools | `claude-code`, `github-copilot-cli`, `opencode`, `herdr`, `omp` | AUR for Claude Code and the Copilot CLI binary; Arch for OpenCode; GitHub release binaries for Herdr and omp |
 | Gaming | `steam` | Arch `multilib`; only in `full` |
+| Desktop tools | `hyprmod` | AUR; GTK4/libadwaita settings UI for Hyprland |
 
 The `firefox-developer-edition` entry also installs the German language pack.
 Caelestia's default Firefox and Foot components are disabled: this setup uses
