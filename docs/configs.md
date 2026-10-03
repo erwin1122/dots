@@ -48,7 +48,7 @@ Behavior of the `configs` role:
 | `fish` | `config/fish/.config/fish/` | `~/.config/fish/` | `fish_variables` is machine-generated and deliberately not managed |
 | `git` | `config/git/.config/git/` | `~/.config/git/` | User name/email intentionally excluded |
 | `kitty` | `config/kitty/.config/kitty/` | `~/.config/kitty/` | |
-| `nvim` | `config/nvim/.config/nvim/` | `~/.config/nvim/` | Kickstart-based |
+| `neovim` | `config/neovim/.config/nvim/` | `~/.config/nvim/` | Kickstart-based |
 | `tmux` | `config/tmux/.tmux.conf` | `~/.tmux.conf` | |
 | `lazygit` | `config/lazygit/.config/lazygit/` | `~/.config/lazygit/` | |
 | `btop` | `config/btop/.config/btop/` | `~/.config/btop/` | |
