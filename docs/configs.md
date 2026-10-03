@@ -55,7 +55,7 @@ Behavior:
 | `starship` | `config/starship/.config/starship.toml` | `~/.config/starship.toml` | |
 | `herdr` | `config/herdr/.config/herdr/` | `~/.config/herdr/` | `config.toml` + the vendored `plugins/vim-herdr-navigation` (registered via `herdr plugin link`); machine-generated state files are not managed |
 | `omp` | `config/omp/.omp/config.yml` | `~/.omp/config.yml` | German speech-to-text enabled |
-| `caelestia` | `config/caelestia/.config/caelestia/` | `~/.config/caelestia/` | `hypr-user.lua` (keybinds/config) + `hypr-vars.lua` (app overrides); applied when the profile enables Caelestia |
+| `caelestia` | `config/caelestia/.config/caelestia/` | `~/.config/caelestia/` | `hypr-user.lua` (keybinds/config) + `hypr-vars.lua` (app overrides) + `shell.json` (launcher `vimKeybinds` enabled: Ctrl+J/N down, Ctrl+K/P up in launcher); applied when the profile enables Caelestia |
 
 ## Not managed (yet)
 
