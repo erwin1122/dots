@@ -3,4 +3,4 @@ dotfiles_home: "{{ ansible_facts['env']['HOME'] }}"
 dotfiles_profile: full
 dotfiles_selected_apps: []
 dotfiles_steam_vulkan_driver: auto
-dotfiles_config_dir: "{{ playbook_dir }}/../config"
+dotfiles_config_dir: "{{ (playbook_dir ~ '/../config') | realpath }}"
