@@ -230,8 +230,21 @@
   ansible.builtin.systemd_service:
     name: docker.service
     enabled: true
-    state: started
   when: "'docker' in dotfiles_resolved_applications"
+
+- name: Start Docker
+  ansible.builtin.systemd_service:
+    name: docker.service
+    state: started
+  register: arch_docker_start
+  failed_when: false
+  when: "'docker' in dotfiles_resolved_applications"
+
+- name: Record services that could not start
+  ansible.builtin.set_fact:
+    arch_services_needing_reboot: >-
+      {{ (arch_services_needing_reboot | default([]))
+         + (['docker.service'] if arch_docker_start is failed else []) }}
 
 - name: Add the user to the Docker group
   ansible.builtin.user:
@@ -244,8 +257,21 @@
   ansible.builtin.systemd_service:
     name: libvirtd.service
     enabled: true
-    state: started
   when: "'virt-manager' in dotfiles_resolved_applications"
+
+- name: Start libvirt
+  ansible.builtin.systemd_service:
+    name: libvirtd.service
+    state: started
+  register: arch_libvirt_start
+  failed_when: false
+  when: "'virt-manager' in dotfiles_resolved_applications"
+
+- name: Record the libvirt start failure
+  ansible.builtin.set_fact:
+    arch_services_needing_reboot: >-
+      {{ (arch_services_needing_reboot | default([]))
+         + (['libvirtd.service'] if arch_libvirt_start is failed else []) }}
 
 - name: Add the user to virtualization groups
   ansible.builtin.user:

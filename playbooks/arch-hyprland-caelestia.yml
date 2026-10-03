@@ -66,3 +66,13 @@
       tags: [caelestia]
     - role: configs
       tags: [configs]
+
+  post_tasks:
+    - name: Report services that need a reboot to start
+      ansible.builtin.debug:
+        msg: >-
+          {{ arch_services_needing_reboot | join(', ') }} could not start
+          during this run. Most likely the kernel was updated mid-run
+          (missing modules for the running kernel). Reboot and re-run the
+          bootstrap — everything else is already in place.
+      when: (arch_services_needing_reboot | default([])) | length > 0
