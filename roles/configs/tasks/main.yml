@@ -149,8 +149,7 @@
     {{ configs_targets.results
        | selectattr('stat.exists')
        | selectattr('stat.islnk', 'equalto', false)
-       | map(attribute='item')
-       | reject('in', configs_merge_mappings)
+       | rejectattr('item', 'in', configs_merge_mappings)
        | list }}
   changed_when: true
 
