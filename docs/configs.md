@@ -55,7 +55,7 @@ Behavior:
 | `starship` | `config/starship/.config/starship.toml` | `~/.config/starship.toml` | |
 | `herdr` | `config/herdr/.config/herdr/` | `~/.config/herdr/` | Only `config.toml`; `plugins.json` contains absolute local paths and is not managed |
 | `omp` | `config/omp/.omp/config.yml` | `~/.omp/config.yml` | German speech-to-text enabled |
-| `caelestia` | `config/caelestia/.config/caelestia/` | `~/.config/caelestia/` | `hypr-user.lua` user overrides; applied when the profile enables Caelestia |
+| `caelestia` | `config/caelestia/.config/caelestia/` | `~/.config/caelestia/` | `hypr-user.lua` (keybinds/config) + `hypr-vars.lua` (app overrides); applied when the profile enables Caelestia |
 
 ## Not managed (yet)
 
@@ -63,13 +63,14 @@ Behavior:
   (`hyprland.lua` plus the modular `hyprland/*.lua` files); replacing it with
   the old Omarchy-style `.conf` files would break the shell.
 - **Hyprland user overrides** — managed as
-  `config/caelestia/.config/caelestia/hypr-user.lua` →
-  `~/.config/caelestia/hypr-user.lua`. Caelestia loads this file at the end of
-  its `hyprland.lua`, so every setting there wins over Caelestia defaults.
+  `config/caelestia/.config/caelestia/hypr-user.lua` (keybindings and config
+  settings) plus `config/caelestia/.config/caelestia/hypr-vars.lua` (app
+  overrides so Caelestia's own keybinds launch kitty, Firefox Developer
+  Edition, nvim, and nautilus). Caelestia loads these at the end of its
+  `hyprland.lua`, so every setting there wins over Caelestia defaults.
   Applied whenever the profile enables Caelestia (independent of the app
-  catalog). Bindings that relied on Omarchy helper scripts (`omarchy-launch-*`,
-  `uwsm-app`) are deliberately not ported yet — they need Caelestia-native
-  launchers first.
+  catalog). Omarchy-specific bindings (Omarchy menu, webapp bindings,
+  1Password) are documented as not ported inside `hypr-user.lua`.
 - **`waybar`, `i3`, `wezterm`** — legacy from the previous desktop; they are
   not part of the Hyprland/Caelestia target.
 
