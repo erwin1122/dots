@@ -18,6 +18,12 @@ Profiles:
   server       Command-line, development, containers, and AI tools
   custom       Install only the app IDs supplied after the profile
   select       Interactively choose app IDs from the terminal
+
+Environment:
+  DOTS_NONINTERACTIVE=1  Never prompt for anything (fails instead of asking)
+  DOTS_SUDO_PASSWORD=..  Sudo password for TTY-less runs (curl | bash over
+                         SSH); automation/tests only — an interactive
+                         terminal prompts without it
 EOF
 }
 
@@ -75,6 +81,19 @@ esac
 
 if [[ "${DOTS_NONINTERACTIVE:-0}" == "1" ]]; then
   sudo_options+=(--non-interactive)
+fi
+
+# Without a TTY (curl | bash, SSH without -t) sudo cannot prompt for a
+# password. DOTS_SUDO_PASSWORD supplies it through a throwaway askpass
+# helper. Only use this for automation; interactively, leave it unset so
+# sudo prompts normally.
+if [[ -n "${DOTS_SUDO_PASSWORD:-}" ]]; then
+  askpass_file="$(mktemp)"
+  trap 'rm -f "${extra_vars_file:-}" "${askpass_file}"' EXIT
+  printf '#!/bin/sh\necho "%s"\n' "${DOTS_SUDO_PASSWORD//\"/\\\"}" >"${askpass_file}"
+  chmod 700 "${askpass_file}"
+  export SUDO_ASKPASS="${askpass_file}"
+  sudo_options+=(-A)
 fi
 
 if [[ "$(id -u)" -eq 0 ]]; then
