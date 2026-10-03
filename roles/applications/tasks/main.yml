@@ -200,6 +200,9 @@
     url: "{{ arch_application_catalog[item].binary.url }}"
     dest: "{{ dotfiles_home }}/{{ arch_application_catalog[item].binary.dest }}"
     mode: "0755"
+    retries: 4
+    delay: 5
+    timeout: 300
   loop: "{{ arch_binary_applications }}"
 
 - name: Set Fish as the user's login shell
