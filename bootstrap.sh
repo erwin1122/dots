@@ -21,9 +21,12 @@ Profiles:
 
 Environment:
   DOTS_NONINTERACTIVE=1  Never prompt for anything (fails instead of asking)
-  DOTS_SUDO_PASSWORD=..  Sudo password for TTY-less runs (curl | bash over
-                         SSH); automation/tests only — an interactive
-                         terminal prompts without it
+  DOTS_SUDO_PASSWORD=..  Sudo password for TTY-less runs; export it before
+                         piping so it reaches the script:
+                           export DOTS_SUDO_PASSWORD=...
+                           curl ... | bash -s -- workstation
+                         Automation/tests only — an interactive terminal
+                         prompts without it.
 EOF
 }
 
@@ -86,8 +89,11 @@ fi
 # Without a TTY (curl | bash, SSH without -t) sudo cannot prompt for a
 # password. DOTS_SUDO_PASSWORD supplies it through a throwaway askpass
 # helper. Only use this for automation; interactively, leave it unset so
-# sudo prompts normally.
+# sudo prompts normally. Askpass replaces --non-interactive: sudo rejects
+# the -A --non-interactive combination in a full session environment
+# ("a password is required"), while askpass alone already cannot prompt.
 if [[ -n "${DOTS_SUDO_PASSWORD:-}" ]]; then
+  sudo_options=()
   askpass_file="$(mktemp)"
   trap 'rm -f "${extra_vars_file:-}" "${askpass_file}"' EXIT
   printf '#!/bin/sh\necho "%s"\n' "${DOTS_SUDO_PASSWORD//\"/\\\"}" >"${askpass_file}"
