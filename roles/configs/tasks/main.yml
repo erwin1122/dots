@@ -33,6 +33,12 @@
         ) | unique | sort
       }}
 
+- name: Install GNU Stow
+  ansible.builtin.package:
+    name: stow
+    state: present
+  when: configs_active_apps | length > 0 and (configs_install_stow | default(true)) | bool
+
 - name: Inventory top-level entries of active configuration packages
   ansible.builtin.find:
     paths: "{{ dotfiles_config_dir }}/{{ item }}"
@@ -58,86 +64,46 @@
   register: configs_nested
   changed_when: false
 
-- name: Build the configuration link mappings
+- name: Build the potential file-level link mappings
   ansible.builtin.set_fact:
-    configs_link_mappings: >-
+    configs_file_mappings: >-
       {%- set mappings = [] -%}
       {%- for result in configs_top.results -%}
         {%- for entry in result.files | default([]) -%}
           {%- set name = entry.path | basename -%}
-          {%- if name not in ['.config', '.omp'] -%}
+          {%- if name not in ['.config', '.omp'] and not entry.isdir -%}
             {{- mappings.append({
                   'src': entry.path,
-                  'dest': dotfiles_home ~ '/' ~ name,
-                  'isdir': entry.isdir }) -}}
+                  'dest': dotfiles_home ~ '/' ~ name }) -}}
           {%- endif -%}
         {%- endfor -%}
       {%- endfor -%}
       {%- for result in configs_nested.results -%}
         {%- for entry in result.files | default([]) -%}
-          {{- mappings.append({
-                'src': entry.path,
-                'dest': dotfiles_home ~ '/'
-                        ~ (result.item.path | basename) ~ '/'
-                        ~ (entry.path | basename),
-                'isdir': entry.isdir }) -}}
+          {%- if not entry.isdir -%}
+            {{- mappings.append({
+                  'src': entry.path,
+                  'dest': dotfiles_home ~ '/'
+                          ~ (result.item.path | basename) ~ '/'
+                          ~ (entry.path | basename) }) -}}
+          {%- endif -%}
         {%- endfor -%}
       {%- endfor -%}
       {{- mappings -}}
 
-- name: Check the current state of configuration targets
+- name: Check the current state of file targets
   ansible.builtin.stat:
     path: "{{ item.dest }}"
-  loop: "{{ configs_link_mappings }}"
+  loop: "{{ configs_file_mappings }}"
   register: configs_targets
   changed_when: false
-
-- name: Identify existing directories that must be merged, not replaced
-  ansible.builtin.set_fact:
-    configs_merge_mappings: >-
-      {{ configs_targets.results
-         | selectattr('stat.exists')
-         | selectattr('stat.islnk', 'equalto', false)
-         | selectattr('stat.isdir')
-         | map(attribute='item')
-         | selectattr('isdir')
-         | list }}
-
-- name: Inventory entries of directories that will be merged
-  ansible.builtin.find:
-    paths: "{{ item.src }}"
-    file_type: any
-    hidden: true
-    recurse: false
-  loop: "{{ configs_merge_mappings }}"
-  register: configs_merge_entries
-  changed_when: false
-
-- name: Compute the final link mappings
-  ansible.builtin.set_fact:
-    configs_final_mappings: >-
-      {%- set final = [] -%}
-      {%- for mapping in configs_link_mappings -%}
-        {%- if mapping in configs_merge_mappings -%}
-          {%- for child in configs_merge_entries.results
-              | selectattr('item', 'equalto', mapping)
-              | map(attribute='files') | flatten -%}
-            {{- final.append({
-                  'src': child.path,
-                  'dest': mapping.dest ~ '/' ~ (child.path | basename) }) -}}
-          {%- endfor -%}
-        {%- else -%}
-          {{- final.append(mapping) -}}
-        {%- endif -%}
-      {%- endfor -%}
-      {{- final -}}
 
 - name: Create the configuration archive directory
   ansible.builtin.file:
     path: "{{ dotfiles_home }}/.cache/dots/archived-configs"
     state: directory
 
-- name: Archive unmanaged files that would be replaced
+- name: Archive unmanaged files that would conflict with Stow
   ansible.builtin.command:
     cmd: >-
       mv {{ item.item.dest | quote }}
@@ -149,20 +115,20 @@
     {{ configs_targets.results
        | selectattr('stat.exists')
        | selectattr('stat.islnk', 'equalto', false)
-       | rejectattr('item', 'in', configs_merge_mappings)
        | list }}
   changed_when: true
 
-- name: Create parent directories for configuration links
+- name: Create directories that must not be folded by Stow
   ansible.builtin.file:
-    path: "{{ item.dest | dirname }}"
+    path: "{{ dotfiles_home }}/{{ item }}"
     state: directory
-  loop: "{{ configs_final_mappings }}"
+  loop: "{{ configs_no_fold_dirs | default(['.omp']) }}"
 
-- name: Link managed configuration into the home directory
-  ansible.builtin.file:
-    src: "{{ item.src }}"
-    dest: "{{ item.dest }}"
-    state: link
-    force: true
-  loop: "{{ configs_final_mappings }}"
+- name: Deploy configurations with GNU Stow
+  ansible.builtin.command:
+    cmd: >-
+      stow --dir {{ dotfiles_config_dir | quote }}
+      --target {{ dotfiles_home | quote }}
+      --verbose=1 --restow {{ configs_active_apps | join(' ') }}
+  register: configs_stow
+  changed_when: "'LINK' in configs_stow.stdout or 'UNLINK' in configs_stow.stdout"
