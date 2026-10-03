@@ -56,12 +56,21 @@ Behavior of the `configs` role:
 | `starship` | `config/starship/.config/starship.toml` | `~/.config/starship.toml` | |
 | `herdr` | `config/herdr/.config/herdr/` | `~/.config/herdr/` | Only `config.toml`; `plugins.json` contains absolute local paths and is not managed |
 | `omp` | `config/omp/.omp/config.yml` | `~/.omp/config.yml` | German speech-to-text enabled |
+| `caelestia` | `config/caelestia/.config/caelestia/` | `~/.config/caelestia/` | `hypr-user.lua` user overrides; applied when the profile enables Caelestia |
 
 ## Not managed (yet)
 
-- **Hyprland / Caelestia** — Caelestia writes its own Hyprland configuration
-  during `caelestia install`. User-level Hyprland tweaks will be integrated in
-  a follow-up step after verifying against the Caelestia layout.
+- **Hyprland base layout** — Caelestia v2 owns `~/.config/hypr/`
+  (`hyprland.lua` plus the modular `hyprland/*.lua` files); replacing it with
+  the old Omarchy-style `.conf` files would break the shell.
+- **Hyprland user overrides** — managed as
+  `config/caelestia/.config/caelestia/hypr-user.lua` →
+  `~/.config/caelestia/hypr-user.lua`. Caelestia loads this file at the end of
+  its `hyprland.lua`, so every setting there wins over Caelestia defaults.
+  Applied whenever the profile enables Caelestia (independent of the app
+  catalog). Bindings that relied on Omarchy helper scripts (`omarchy-launch-*`,
+  `uwsm-app`) are deliberately not ported yet — they need Caelestia-native
+  launchers first.
 - **`waybar`, `i3`, `wezterm`** — legacy from the previous desktop; they are
   not part of the Hyprland/Caelestia target.
 

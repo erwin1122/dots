@@ -14,11 +14,24 @@
   register: configs_available
   changed_when: false
 
-- name: Determine installed applications that have managed configuration
+- name: List available configuration package identifiers
+  ansible.builtin.set_fact:
+    configs_available_ids: >-
+      {{ configs_available.files | map(attribute='path') | map('basename') | list }}
+
+- name: Determine applications with managed configuration
   ansible.builtin.set_fact:
     configs_active_apps: >-
-      {{ configs_available.files | map(attribute='path') | map('basename')
-         | select('in', dotfiles_resolved_applications) | list | sort }}
+      {{
+        (
+          configs_available_ids
+          | select('in', dotfiles_resolved_applications) | list
+          + (['caelestia']
+             if (dotfiles_profile_features.caelestia | default(false) | bool
+                 and 'caelestia' in configs_available_ids)
+             else [])
+        ) | unique | sort
+      }}
 
 - name: Inventory top-level entries of active configuration packages
   ansible.builtin.find:
@@ -55,7 +68,8 @@
           {%- if name not in ['.config', '.omp'] -%}
             {{- mappings.append({
                   'src': entry.path,
-                  'dest': dotfiles_home ~ '/' ~ name }) -}}
+                  'dest': dotfiles_home ~ '/' ~ name,
+                  'isdir': entry.isdir }) -}}
           {%- endif -%}
         {%- endfor -%}
       {%- endfor -%}
@@ -65,24 +79,65 @@
                 'src': entry.path,
                 'dest': dotfiles_home ~ '/'
                         ~ (result.item.path | basename) ~ '/'
-                        ~ (entry.path | basename) }) -}}
+                        ~ (entry.path | basename),
+                'isdir': entry.isdir }) -}}
         {%- endfor -%}
       {%- endfor -%}
       {{- mappings -}}
 
-- name: Check for unmanaged files at configuration targets
+- name: Check the current state of configuration targets
   ansible.builtin.stat:
     path: "{{ item.dest }}"
   loop: "{{ configs_link_mappings }}"
   register: configs_targets
   changed_when: false
 
+- name: Identify existing directories that must be merged, not replaced
+  ansible.builtin.set_fact:
+    configs_merge_mappings: >-
+      {{ configs_targets.results
+         | selectattr('stat.exists')
+         | selectattr('stat.islnk', 'equalto', false)
+         | selectattr('stat.isdir')
+         | map(attribute='item')
+         | selectattr('isdir')
+         | list }}
+
+- name: Inventory entries of directories that will be merged
+  ansible.builtin.find:
+    paths: "{{ item.src }}"
+    file_type: any
+    hidden: true
+    recurse: false
+  loop: "{{ configs_merge_mappings }}"
+  register: configs_merge_entries
+  changed_when: false
+
+- name: Compute the final link mappings
+  ansible.builtin.set_fact:
+    configs_final_mappings: >-
+      {%- set final = [] -%}
+      {%- for mapping in configs_link_mappings -%}
+        {%- if mapping in configs_merge_mappings -%}
+          {%- for child in configs_merge_entries.results
+              | selectattr('item', 'equalto', mapping)
+              | map(attribute='files') | flatten -%}
+            {{- final.append({
+                  'src': child.path,
+                  'dest': mapping.dest ~ '/' ~ (child.path | basename) }) -}}
+          {%- endfor -%}
+        {%- else -%}
+          {{- final.append(mapping) -}}
+        {%- endif -%}
+      {%- endfor -%}
+      {{- final -}}
+
 - name: Create the configuration archive directory
   ansible.builtin.file:
     path: "{{ dotfiles_home }}/.cache/dots/archived-configs"
     state: directory
 
-- name: Archive unmanaged configuration targets
+- name: Archive unmanaged files that would be replaced
   ansible.builtin.command:
     cmd: >-
       mv {{ item.item.dest | quote }}
@@ -94,7 +149,8 @@
     {{ configs_targets.results
        | selectattr('stat.exists')
        | selectattr('stat.islnk', 'equalto', false)
-       | selectattr('stat.isdir')
+       | map(attribute='item')
+       | reject('in', configs_merge_mappings)
        | list }}
   changed_when: true
 
@@ -102,7 +158,7 @@
   ansible.builtin.file:
     path: "{{ item.dest | dirname }}"
     state: directory
-  loop: "{{ configs_link_mappings }}"
+  loop: "{{ configs_final_mappings }}"
 
 - name: Link managed configuration into the home directory
   ansible.builtin.file:
@@ -110,4 +166,4 @@
     dest: "{{ item.dest }}"
     state: link
     force: true
-  loop: "{{ configs_link_mappings }}"
+  loop: "{{ configs_final_mappings }}"
