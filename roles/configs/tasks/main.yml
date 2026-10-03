@@ -64,37 +64,37 @@
   register: configs_nested
   changed_when: false
 
-- name: Build the potential file-level link mappings
+- name: Build the potential link mappings
   ansible.builtin.set_fact:
-    configs_file_mappings: >-
+    configs_link_mappings: >-
       {%- set mappings = [] -%}
       {%- for result in configs_top.results -%}
         {%- for entry in result.files | default([]) -%}
           {%- set name = entry.path | basename -%}
-          {%- if name not in ['.config', '.omp'] and not entry.isdir -%}
+          {%- if name not in ['.config', '.omp'] -%}
             {{- mappings.append({
                   'src': entry.path,
-                  'dest': dotfiles_home ~ '/' ~ name }) -}}
+                  'dest': dotfiles_home ~ '/' ~ name,
+                  'isdir': entry.isdir }) -}}
           {%- endif -%}
         {%- endfor -%}
       {%- endfor -%}
       {%- for result in configs_nested.results -%}
         {%- for entry in result.files | default([]) -%}
-          {%- if not entry.isdir -%}
-            {{- mappings.append({
-                  'src': entry.path,
-                  'dest': dotfiles_home ~ '/'
-                          ~ (result.item.path | basename) ~ '/'
-                          ~ (entry.path | basename) }) -}}
-          {%- endif -%}
+          {{- mappings.append({
+                'src': entry.path,
+                'dest': dotfiles_home ~ '/'
+                        ~ (result.item.path | basename) ~ '/'
+                        ~ (entry.path | basename),
+                'isdir': entry.isdir }) -}}
         {%- endfor -%}
       {%- endfor -%}
       {{- mappings -}}
 
-- name: Check the current state of file targets
+- name: Check the current state of link targets
   ansible.builtin.stat:
     path: "{{ item.dest }}"
-  loop: "{{ configs_file_mappings }}"
+  loop: "{{ configs_link_mappings }}"
   register: configs_targets
   changed_when: false
 
@@ -103,7 +103,19 @@
     path: "{{ dotfiles_home }}/.cache/dots/archived-configs"
     state: directory
 
-- name: Archive unmanaged files that would conflict with Stow
+- name: Determine archive candidates
+  ansible.builtin.set_fact:
+    configs_archive_candidates: >-
+      {%- set items = [] -%}
+      {%- for result in configs_targets.results -%}
+        {%- if result.stat.exists and not result.stat.islnk
+              and (not result.stat.isdir or not result.item.isdir) -%}
+          {{- items.append(result) -}}
+        {%- endif -%}
+      {%- endfor -%}
+      {{- items -}}
+
+- name: Archive unmanaged content that would conflict with Stow
   ansible.builtin.command:
     cmd: >-
       mv {{ item.item.dest | quote }}
@@ -111,10 +123,18 @@
           ~ (item.item.dest | replace(dotfiles_home ~ '/', '')
              | replace('/', '-'))
           ~ '-' ~ lookup('pipe', 'date +%Y%m%d-%H%M%S')) | quote }}
+  loop: "{{ configs_archive_candidates }}"
+  changed_when: true
+
+- name: Remove stale absolute symlinks so Stow can create relative ones
+  ansible.builtin.file:
+    path: "{{ item.item.dest }}"
+    state: absent
   loop: >-
     {{ configs_targets.results
        | selectattr('stat.exists')
-       | selectattr('stat.islnk', 'equalto', false)
+       | selectattr('stat.islnk')
+       | selectattr('stat.lnk_target', 'match', '^/')
        | list }}
   changed_when: true
 
@@ -131,4 +151,6 @@
       --target {{ dotfiles_home | quote }}
       --verbose=1 --restow {{ configs_active_apps | join(' ') }}
   register: configs_stow
-  changed_when: "'LINK' in configs_stow.stdout or 'UNLINK' in configs_stow.stdout"
+  changed_when: >-
+    'LINK' in (configs_stow.stdout ~ configs_stow.stderr)
+    or 'UNLINK' in (configs_stow.stdout ~ configs_stow.stderr)
