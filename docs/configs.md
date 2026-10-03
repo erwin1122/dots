@@ -21,24 +21,23 @@ config/
 
 Rules:
 
-- Everything directly inside `config/<app>/` is linked to the same relative
-  path in `$HOME` (`config/bash/.bashrc` → `~/.bashrc`).
-- A single leading `.config` or `.omp` directory is transparent: its contents
-  are linked one level deeper, because `~/.config` itself must stay a real
-  directory shared with other applications.
-- `.config`, `.omp` themselves and `$HOME` are never replaced.
+- `config/<app>/` mirrors the target paths inside `$HOME`; every file in it is
+  symlinked individually (`config/bash/.bashrc` → `~/.bashrc`,
+  `config/fish/.config/fish/config.fish` → `~/.config/fish/config.fish`).
+- Directories in the repo are not linked themselves — their files are. This
+  merges cleanly into directories that already exist on the target system
+  (for example `~/.config/caelestia` managed by Caelestia) without replacing
+  foreign content. Empty directories are not reproduced.
+- Files that already exist at a target path and are not our symlinks are
+  archived to `~/.cache/dots/archived-configs/` instead of being overwritten.
 
-Behavior of the `configs` role:
+Behavior:
 
 - Only applications that are installed in the same playbook run
   (`dotfiles_resolved_applications`) get their configuration deployed. Adding
   an app to the catalog plus a matching `config/<app>/` directory is enough.
-- If an unmanaged real directory already exists at a target path, it is moved
-  to `~/.cache/dots/archived-configs/` instead of being overwritten. Existing
-  files and symlinks are replaced.
-- Re-running the playbook updates the symlinks (they point into the repo, so
-  a `git pull` in `~/dots` updates your configuration without re-running
-  Ansible).
+- Re-running the playbook updates all symlinks. Files added later to
+  `config/<app>/` are deployed on the next playbook run.
 
 ## Managed configurations
 
