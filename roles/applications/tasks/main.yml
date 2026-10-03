@@ -181,13 +181,26 @@
         path: /etc/sudoers.d/dots-yay
         state: absent
 
+- name: Collect applications installed as release binaries
+  ansible.builtin.set_fact:
+    arch_binary_applications: >-
+      {{ arch_application_catalog | dict2items
+         | selectattr('key', 'in', dotfiles_resolved_applications)
+         | selectattr('value.binary', 'defined')
+         | map(attribute='key') | list }}
+
+- name: Create the local binary directory
+  ansible.builtin.file:
+    path: "{{ dotfiles_home }}/.local/bin"
+    state: directory
+  when: arch_binary_applications | length > 0
+
 - name: Install applications distributed as release binaries
   ansible.builtin.get_url:
     url: "{{ arch_application_catalog[item].binary.url }}"
     dest: "{{ dotfiles_home }}/{{ arch_application_catalog[item].binary.dest }}"
     mode: "0755"
-  loop: "{{ dotfiles_resolved_applications }}"
-  when: arch_application_catalog[item].binary is defined
+  loop: "{{ arch_binary_applications }}"
 
 - name: Set Fish as the user's login shell
   ansible.builtin.user:
