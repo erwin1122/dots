@@ -96,6 +96,8 @@
   ansible.builtin.file:
     path: "{{ item.dest | dirname }}"
     state: directory
+  become: "{{ ansible_facts['user_id'] != dotfiles_user }}"
+  become_user: "{{ dotfiles_user }}"
   loop: "{{ configs_link_mappings }}"
   loop_control:
     label: "{{ item.dest | dirname }}"
@@ -106,6 +108,8 @@
     dest: "{{ item.dest }}"
     state: link
     force: true
+  become: "{{ ansible_facts['user_id'] != dotfiles_user }}"
+  become_user: "{{ dotfiles_user }}"
   loop: "{{ configs_link_mappings }}"
   loop_control:
     label: "{{ item.dest }}"
