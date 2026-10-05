@@ -1,10 +1,10 @@
 ---
-- name: Require resolved applications from the applications role
+- name: Require resolved application identifiers
   ansible.builtin.assert:
     that: dotfiles_resolved_applications is defined
     fail_msg: >-
-      The configs role depends on dotfiles_resolved_applications, which is set
-      by the applications role. Run it before configs.
+      Resolve application IDs with the applications role or the configuration-only
+      playbook before running the configs role.
 
 - name: Locate configuration packages in the repository
   ansible.builtin.find:
@@ -58,6 +58,36 @@
       {%- endfor -%}
       {{- mappings -}}
 
+- name: Collect parent directories of managed files
+  ansible.builtin.set_fact:
+    configs_parent_directories: >-
+      {%- set directories = [] -%}
+      {%- for mapping in configs_link_mappings -%}
+        {%- set parts = (mapping.dest | relpath(dotfiles_home)).split('/') -%}
+        {%- for depth in range(1, parts | length) -%}
+          {{- directories.append(dotfiles_home ~ '/' ~ (parts[:depth] | join('/'))) -}}
+        {%- endfor -%}
+      {%- endfor -%}
+      {{- directories | unique | sort -}}
+
+- name: Inspect parent directory symlinks
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop: "{{ configs_parent_directories }}"
+  register: configs_parent_targets
+  changed_when: false
+
+- name: Detach existing directory symlinks before linking dots files
+  ansible.builtin.file:
+    path: "{{ item.item }}"
+    state: absent
+  become: "{{ ansible_facts['user_id'] != dotfiles_user }}"
+  become_user: "{{ dotfiles_user }}"
+  loop: "{{ configs_parent_targets.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+  when: item.stat.islnk | default(false)
+
 - name: Check the current state of link targets
   ansible.builtin.stat:
     path: "{{ item.dest }}"
@@ -76,10 +106,23 @@
       {%- endfor -%}
       {{- items -}}
 
-- name: Create the configuration archive directory
+- name: Inspect the archive directory when regular files need backing up
+  ansible.builtin.stat:
+    path: "{{ dotfiles_home }}/.cache/dots/archived-configs"
+  register: configs_archive_directory
+  when: configs_archive_candidates | length > 0
+
+- name: Create a user-owned archive directory when needed
   ansible.builtin.file:
     path: "{{ dotfiles_home }}/.cache/dots/archived-configs"
     state: directory
+    owner: "{{ dotfiles_user }}"
+  become: >-
+    {{ ansible_facts['user_id'] != 'root'
+       and configs_archive_directory.stat.exists
+       and configs_archive_directory.stat.pw_name != dotfiles_user }}
+  become_user: root
+  when: configs_archive_candidates | length > 0
 
 - name: Archive unmanaged files that would conflict
   ansible.builtin.command:
@@ -91,6 +134,8 @@
           ~ '-' ~ lookup('pipe', 'date +%Y%m%d-%H%M%S')) | quote }}
   loop: "{{ configs_archive_candidates }}"
   changed_when: true
+  become: "{{ ansible_facts['user_id'] != dotfiles_user }}"
+  become_user: "{{ dotfiles_user }}"
 
 - name: Create parent directories for configuration links
   ansible.builtin.file:
@@ -114,7 +159,7 @@
   loop_control:
     label: "{{ item.dest }}"
 
-- name: Register herdr plugins that are not yet linked
+- name: Register herdr plugins and reload a running server
   ansible.builtin.shell:
     cmd: |
       set -euo pipefail
@@ -122,7 +167,7 @@
       [ -n "$herdr_bin" ] || herdr_bin="{{ dotfiles_home }}/.local/bin/herdr"
       plugins_dir="{{ dotfiles_home }}/.config/herdr/plugins"
       for manifest in "$plugins_dir"/*/herdr-plugin.toml; do
-        [ -e "$manifest" ] || exit 0
+        [ -e "$manifest" ] || continue
         plugin_dir="$(dirname "$manifest")"
         id="$(sed -n 's/^id *= *"\(.*\)"/\1/p' "$manifest" | head -1)"
         [ -n "$id" ] || continue
@@ -130,6 +175,9 @@
           "$herdr_bin" plugin link "$plugin_dir"
         fi
       done
+      if "$herdr_bin" status server | grep -q '^status: running$'; then
+        "$herdr_bin" server reload-config
+      fi
   become: "{{ ansible_facts['user_id'] != dotfiles_user }}"
   become_user: "{{ dotfiles_user }}"
   when: "'herdr' in configs_active_apps"

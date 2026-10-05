@@ -1,0 +1,32 @@
+---
+- name: Apply selected application configurations without installing packages
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  become: false
+  vars_files:
+    - ../group_vars/all.yml
+  pre_tasks:
+    - name: Require explicit configuration selection
+      ansible.builtin.assert:
+        that:
+          - dotfiles_selected_apps is sequence
+          - dotfiles_selected_apps is not string
+          - dotfiles_selected_apps is not mapping
+          - dotfiles_selected_apps | length > 0
+        fail_msg: >-
+          Select configuration IDs with
+          -e '{"dotfiles_selected_apps":["neovim"]}'.
+
+    - name: Resolve selected configurations
+      ansible.builtin.set_fact:
+        dotfiles_resolved_applications: "{{ dotfiles_selected_apps | unique | sort }}"
+
+    - name: Resolve explicit Caelestia configuration selection
+      ansible.builtin.set_fact:
+        dotfiles_profile_features:
+          caelestia: "{{ 'caelestia' in dotfiles_selected_apps }}"
+
+  roles:
+    - role: configs
+      tags: [configs]

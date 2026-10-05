@@ -16,6 +16,28 @@ The bootstrap script installs its dependencies, clones this repository to
 `~/dots`, then runs the versioned local Ansible playbook. Review
 [`bootstrap.sh`](bootstrap.sh) before using a changed revision.
 
+### Apply configs locally
+
+After the initial installation, run the configuration-only playbook from your
+local checkout as your normal user:
+
+```bash
+cd ~/dots
+ansible-playbook playbooks/configs.yml \
+  -e '{"dotfiles_selected_apps":["neovim","fish","tmux"]}'
+```
+
+This does not install or update system packages. Select only the configs you
+want to apply. Regular local config files are archived; old directory symlinks
+are detached without copying their contents or modifying their source checkout.
+The active managed files then come exclusively from `dots`. See
+[docs/configs.md](docs/configs.md) for details, including archive ownership repair
+when earlier root-run provisioning left root-owned backups.
+
+For Neovim's Herdr navigation, an already configured Herdr does not need to be
+selected again. On a fresh setup, install/configure Herdr first; the Neovim
+bindings load its bundled editor integration.
+
 ## Tutorials
 
 - [Install Arch Linux with KDE Plasma and SDDM](docs/archinstall-kde-plasma.md)
