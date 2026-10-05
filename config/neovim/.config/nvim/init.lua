@@ -184,6 +184,8 @@ vim.keymap.set('n', '<leader>wx', '<C-w>x', { desc = 'Exchange windows' })
 vim.keymap.set('n', '<leader>wt', '<C-w>t', { desc = 'Go to top-left window' })
 vim.keymap.set('n', '<leader>wb', '<C-w>b', { desc = 'Go to bottom-right window' })
 vim.keymap.set('n', '<leader>wn', '<C-w>n', { desc = 'Create new window' })
+vim.keymap.set('n', '<leader>n', '<cmd>cnext<CR>', { desc = 'Quickfix next' })
+vim.keymap.set('n', '<leader>p', '<cmd>cprevious<CR>', { desc = 'Quickfix previous' })
 pcall(vim.keymap.del, 'n', '<leader>e')
 
 vim.api.nvim_create_autocmd('TextYankPost', {
@@ -193,6 +195,10 @@ vim.api.nvim_create_autocmd('TextYankPost', {
     vim.hl.on_yank()
   end,
 })
+
+-- Muss vor lazy.nvim laufen: Plugins registrieren ihre Treesitter-Direktiven
+-- beim Laden, der Shim muss also vorher aktiv sein.
+require 'compat.treesitter_directives'
 
 local lazypath = vim.fn.stdpath 'data' .. '/lazy/lazy.nvim'
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
